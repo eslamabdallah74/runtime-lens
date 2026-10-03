@@ -1,0 +1,196 @@
+{
+  "name": "runtime-lens",
+  "displayName": "Runtime Lens",
+  "description": "See query counts, N+1s, slow queries, slow HTTP calls, exceptions and method timings from your running Laravel app right next to the code.",
+  "version": "1.0.0",
+  "publisher": "runtime-lens",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#1f2937",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eslamabdallah74/runtime-lens"
+  },
+  "homepage": "https://github.com/eslamabdallah74/runtime-lens#readme",
+  "bugs": {
+    "url": "https://github.com/eslamabdallah74/runtime-lens/issues"
+  },
+  "keywords": [
+    "laravel",
+    "php",
+    "n+1",
+    "eloquent",
+    "performance",
+    "profiler",
+    "queries",
+    "telescope",
+    "debugbar"
+  ],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Debuggers",
+    "Visualization",
+    "Other"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/artisan"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "runtimeLens.recentRequests",
+        "title": "Recent Requests",
+        "category": "Runtime Lens"
+      },
+      {
+        "command": "runtimeLens.slowestMethods",
+        "title": "Slowest Methods",
+        "category": "Runtime Lens"
+      },
+      {
+        "command": "runtimeLens.toggleInline",
+        "title": "Toggle Inline Annotations",
+        "category": "Runtime Lens"
+      },
+      {
+        "command": "runtimeLens.clearData",
+        "title": "Clear Data",
+        "category": "Runtime Lens"
+      },
+      {
+        "command": "runtimeLens.copyInstallCommand",
+        "title": "Copy Laravel Install Command",
+        "category": "Runtime Lens"
+      },
+      {
+        "command": "runtimeLens.getStarted",
+        "title": "Get Started",
+        "category": "Runtime Lens"
+      }
+    ],
+    "configuration": {
+      "title": "Runtime Lens",
+      "properties": {
+        "runtimeLens.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Runtime Lens data in the editor."
+        },
+        "runtimeLens.projectRoot": {
+          "type": "string",
+          "default": "",
+          "description": "Laravel project folder relative to the first workspace folder. Leave empty to use the workspace folder that contains artisan."
+        },
+        "runtimeLens.window": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 1,
+          "description": "How many recent requests, jobs and commands to keep in view."
+        },
+        "runtimeLens.nPlusOneThreshold": {
+          "type": "number",
+          "default": 3,
+          "minimum": 2,
+          "description": "Flag a possible N+1 when the same query runs this many times from one line in one request."
+        },
+        "runtimeLens.slowQueryMs": {
+          "type": "number",
+          "default": 100,
+          "minimum": 0,
+          "description": "Flag a query slower than this many milliseconds."
+        },
+        "runtimeLens.slowHttpMs": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 0,
+          "description": "Flag an outgoing HTTP call slower than this many milliseconds."
+        },
+        "runtimeLens.hotLinePercent": {
+          "type": "number",
+          "default": 10,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "With the Excimer profiler: flag a line that takes at least this share of its request time."
+        },
+        "runtimeLens.inline": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the short labels at the end of lines."
+        }
+      }
+    },
+    "walkthroughs": [
+      {
+        "id": "runtimeLens.getStarted",
+        "title": "Get started with Runtime Lens",
+        "description": "See queries, N+1s, slow calls and exceptions next to your Laravel code.",
+        "steps": [
+          {
+            "id": "install",
+            "title": "Install the Laravel package",
+            "description": "Add the dev-only package to your Laravel project and run its installer.\n[Copy install command](command:runtimeLens.copyInstallCommand)",
+            "media": {
+              "markdown": "media/walkthrough/install.md"
+            },
+            "completionEvents": [
+              "onCommand:runtimeLens.copyInstallCommand"
+            ]
+          },
+          {
+            "id": "use",
+            "title": "Use your app",
+            "description": "Open a page or call an endpoint, then open the code that ran.",
+            "media": {
+              "markdown": "media/walkthrough/use.md"
+            }
+          },
+          {
+            "id": "tests",
+            "title": "Record your test suite",
+            "description": "One test run covers every endpoint your tests touch.",
+            "media": {
+              "markdown": "media/walkthrough/tests.md"
+            }
+          },
+          {
+            "id": "explore",
+            "title": "Explore requests and slow methods",
+            "description": "[Recent Requests](command:runtimeLens.recentRequests) · [Slowest Methods](command:runtimeLens.slowestMethods)",
+            "media": {
+              "markdown": "media/walkthrough/commands.md"
+            },
+            "completionEvents": [
+              "onCommand:runtimeLens.recentRequests",
+              "onCommand:runtimeLens.slowestMethods"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc --noEmit -p . && node esbuild.mjs",
+    "test": "vitest run",
+    "package": "vsce package --no-dependencies",
+    "publish:marketplace": "vsce publish --no-dependencies",
+    "publish:openvsx": "ovsx publish --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "~1.90.0",
+    "@vscode/vsce": "^3.2.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.0",
+    "ovsx": "^0.10.0"
+  }
+}

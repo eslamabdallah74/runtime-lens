@@ -1,0 +1,68 @@
+{
+    "name": "runtime-lens/laravel",
+    "description": "See what each line of your Laravel code did at runtime (queries, N+1s, slow HTTP calls, exceptions, timings) right in your editor.",
+    "keywords": [
+        "laravel",
+        "n-plus-one",
+        "eloquent",
+        "performance",
+        "profiler",
+        "debug",
+        "vscode",
+        "queries"
+    ],
+    "homepage": "https://github.com/eslamabdallah74/runtime-lens",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Eslam Abdallah",
+            "homepage": "https://github.com/eslamabdallah74"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/eslamabdallah74/runtime-lens/issues",
+        "source": "https://github.com/eslamabdallah74/runtime-lens"
+    },
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^11.0|^12.0|^13.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
+        "pestphp/pest": "^3.0|^4.0",
+        "pestphp/pest-plugin-laravel": "^3.0|^4.0"
+    },
+    "suggest": {
+        "ext-excimer": "Enables per-method and per-line timing"
+    },
+    "autoload": {
+        "psr-4": {
+            "RuntimeLens\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "RuntimeLens\\Tests\\Fixtures\\App\\": "tests/Fixtures/app/",
+            "RuntimeLens\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "RuntimeLens\\RuntimeLensServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "test": "pest"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        },
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
