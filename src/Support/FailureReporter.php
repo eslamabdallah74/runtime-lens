@@ -28,15 +28,14 @@ final class FailureReporter
 
     private function reportFailure(Throwable $exception): void
     {
-        if (self::$failureReported || $this->reportedRecently()) {
-            return;
-        }
-
-        self::$failureReported = true;
-
         try {
-            touch($this->markerFile);
+            if (self::$failureReported || $this->reportedRecently()) {
+                return;
+            }
+
+            self::$failureReported = true;
             $this->logger->debug('Runtime Lens recorder failure: '.$exception->getMessage(), ['exception' => $exception]);
+            $this->markReported();
         } catch (Throwable) {
         }
     }
@@ -46,5 +45,13 @@ final class FailureReporter
         clearstatcache(true, $this->markerFile);
 
         return is_file($this->markerFile) && filemtime($this->markerFile) > time() - self::REPORT_INTERVAL_SECONDS;
+    }
+
+    private function markReported(): void
+    {
+        try {
+            touch($this->markerFile);
+        } catch (Throwable) {
+        }
     }
 }

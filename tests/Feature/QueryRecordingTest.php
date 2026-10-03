@@ -98,3 +98,14 @@ it('does not record queries that run outside any request, job or command', funct
 
     expect($this->batches())->toBe([]);
 });
+
+it('keeps the batch when bindings are resources or non-finite numbers', function (): void {
+    $unitOfWork = app(RuntimeLens\Batch\UnitOfWork::class);
+    $stream = fopen('php://memory', 'r');
+
+    $unitOfWork->open(RuntimeLens\Enums\BatchKind::Request, 'GET /odd-bindings', microtime(true));
+    event(new Illuminate\Database\Events\QueryExecuted('select ?, ?, ?', [NAN, INF, $stream], 1.0, app('db')->connection()));
+    $unitOfWork->close(RuntimeLens\Enums\BatchKind::Request);
+
+    expect($this->lastBatch()['queries'][0]['bindings'])->toBe(['NAN', 'INF', 'resource']);
+});

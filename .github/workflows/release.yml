@@ -35,16 +35,21 @@ jobs:
       - run: npm test
       - run: npm run package
 
-      - name: Publish to the VS Code Marketplace
-        if: env.VSCE_PAT != ''
-        run: npx vsce publish --no-dependencies --packagePath "$(ls runtime-lens-*.vsix)"
-
-      - name: Publish to Open VSX
-        if: env.OVSX_PAT != ''
-        run: npx ovsx publish "$(ls runtime-lens-*.vsix)" --pat "$OVSX_PAT"
-
       - name: Attach the .vsix to the GitHub release
         uses: softprops/action-gh-release@v2
         with:
           files: extension/runtime-lens-*.vsix
           generate_release_notes: true
+
+      - name: Warn about missing publishing tokens
+        run: |
+          [ -n "$VSCE_PAT" ] || echo "::warning::VSCE_PAT is not set, so the VS Code Marketplace was skipped"
+          [ -n "$OVSX_PAT" ] || echo "::warning::OVSX_PAT is not set, so Open VSX was skipped"
+
+      - name: Publish to the VS Code Marketplace
+        if: env.VSCE_PAT != ''
+        run: npx vsce publish --no-dependencies --skip-duplicate --packagePath "$(ls runtime-lens-*.vsix)"
+
+      - name: Publish to Open VSX
+        if: env.OVSX_PAT != ''
+        run: npx ovsx publish "$(ls runtime-lens-*.vsix)" --pat "$OVSX_PAT" --skip-duplicate

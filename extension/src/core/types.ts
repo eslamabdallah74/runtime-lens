@@ -67,6 +67,7 @@ export interface BatchRecord {
   source: BatchSource;
   kind: BatchKind;
   name: string;
+  group?: string;
   status: number | string | null;
   started_at: string;
   duration_ms: number;

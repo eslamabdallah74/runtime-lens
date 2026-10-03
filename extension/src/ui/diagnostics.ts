@@ -43,8 +43,19 @@ export class LensDiagnostics implements vscode.Disposable {
       return;
     }
 
+    const indexedFiles = new Set<string>();
+
     for (const relativeFile of this.controller.index().keys()) {
-      this.refreshFile(vscode.Uri.file(join(root, relativeFile)), relativeFile);
+      const uri = vscode.Uri.file(join(root, relativeFile));
+
+      indexedFiles.add(uri.fsPath);
+      this.refreshFile(uri, relativeFile);
+    }
+
+    for (const file of this.diskTexts.keys()) {
+      if (!indexedFiles.has(file)) {
+        this.diskTexts.delete(file);
+      }
     }
   }
 

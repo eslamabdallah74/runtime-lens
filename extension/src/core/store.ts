@@ -61,8 +61,10 @@ export function latestRunPerName(batches: BatchRecord[]): BatchRecord[] {
   const latest = new Map<string, BatchRecord>();
 
   for (const batch of batches) {
-    latest.delete(`${batch.kind}|${batch.name}`);
-    latest.set(`${batch.kind}|${batch.name}`, batch);
+    const key = `${batch.kind}|${batch.group ?? batch.name}`;
+
+    latest.delete(key);
+    latest.set(key, batch);
   }
 
   return [...latest.values()];

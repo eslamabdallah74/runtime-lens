@@ -12,6 +12,8 @@ public function index()                         ⏱ avg 340ms per request (12) �
     Http::get($partnerUrl);                     🌐 slow HTTP · 1219ms
 ```
 
+<img width="981" height="401" alt="Runtime Lens labels in VS Code: an N+1 warning and per-line query counts" src="https://github.com/user-attachments/assets/8057eec1-7747-49c5-8357-ec95da6d2811" />
+
 ## Setup
 
 This extension shows data recorded by a small dev-only Composer package. In your Laravel project (Laravel 11, 12 or 13):

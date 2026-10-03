@@ -90,6 +90,8 @@ final class QueryRecorder
             is_string($binding) => $this->truncatedBinding($binding),
             $binding instanceof DateTimeInterface => $binding->format('Y-m-d H:i:s'),
             is_bool($binding) => (int) $binding,
+            is_float($binding) && ! is_finite($binding) => (string) $binding,
+            is_resource($binding) || gettype($binding) === 'resource (closed)' => 'resource',
             is_object($binding) => $binding::class,
             default => $binding,
         };

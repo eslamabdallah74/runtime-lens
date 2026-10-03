@@ -22,6 +22,23 @@ export class LensStatusBar implements vscode.Disposable {
 
     const store = this.controller.batchStore();
     const focused = store.focusedBatch();
+    const readProblem = this.controller.readProblem();
+
+    if (this.controller.root() === null) {
+      this.showProblem('Lens: no Laravel app', 'No artisan file found in this workspace. If your Laravel app is in a subfolder, set runtimeLens.projectRoot.', {
+        title: 'Open settings',
+        command: 'workbench.action.openSettings',
+        arguments: ['runtimeLens.projectRoot'],
+      });
+
+      return;
+    }
+
+    if (readProblem !== null) {
+      this.showProblem('Lens: can\'t read data', `Runtime Lens can't read storage/runtime-lens/batches.jsonl: ${readProblem}. Make sure your editor's user can read it (for example, the PHP container writes it with a strict umask).`, 'runtimeLens.getStarted');
+
+      return;
+    }
 
     if (focused !== null) {
       this.item.text = `Lens: ▶ ${focused.name}`;
@@ -40,6 +57,13 @@ export class LensStatusBar implements vscode.Disposable {
     }
 
     this.item.command = 'runtimeLens.recentRequests';
+    this.item.show();
+  }
+
+  private showProblem(text: string, tooltip: string, command: string | vscode.Command): void {
+    this.item.text = text;
+    this.item.tooltip = tooltip;
+    this.item.command = command;
     this.item.show();
   }
 

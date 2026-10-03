@@ -13,6 +13,8 @@ final class Batch
 
     public int|string|null $status = null;
 
+    public ?string $group = null;
+
     public ?array $entry = null;
 
     public array $queries = [];
@@ -71,6 +73,7 @@ final class Batch
             'source' => $this->source->value,
             'kind' => $this->kind->value,
             'name' => $this->name,
+            'group' => $this->group ?? $this->name,
             'status' => $this->status,
             'started_at' => $this->formattedStart(),
             'duration_ms' => round(($finishedAt - $this->startedAt) * 1000, 1),

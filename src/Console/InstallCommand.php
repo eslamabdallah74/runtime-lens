@@ -13,6 +13,8 @@ final class InstallCommand extends Command
 
     private const ENVIRONMENTS_VARIABLE = 'RUNTIME_LENS_ENVIRONMENTS';
 
+    private const OCTANE_CLASS = 'Laravel\\Octane\\Octane';
+
     protected $signature = 'runtime-lens:install';
 
     protected $description = 'Check that Runtime Lens can record in this project and help set it up';
@@ -22,6 +24,7 @@ final class InstallCommand extends Command
         $this->components->info('Runtime Lens');
 
         $this->reportRecording($activation);
+        $this->reportWorkerMode();
         $this->offerEnvironmentSetup($activation, $files);
         $this->reportConfigCache();
         $this->reportStorage($files);
@@ -39,10 +42,25 @@ final class InstallCommand extends Command
         $this->components->twoColumnDetail('Recording', $offReason === null ? '<fg=green>on</>' : "<fg=yellow>off</> · {$offReason}");
     }
 
+    private function reportWorkerMode(): void
+    {
+        if (! class_exists(self::OCTANE_CLASS) && empty(getenv('OCTANE_SERVER')) && empty($_SERVER['OCTANE_SERVER'])) {
+            return;
+        }
+
+        $this->components->twoColumnDetail('Octane', '<fg=yellow>installed</> · requests served by Octane / FrankenPHP workers are not recorded yet; use php artisan serve or PHP-FPM while you look at Runtime Lens');
+    }
+
     private function offerEnvironmentSetup(Activation $activation, Filesystem $files): void
     {
         $environment = (string) $this->laravel->environment();
         $allowed = $activation->allowedEnvironments();
+
+        if ($environment === 'testing') {
+            $this->components->twoColumnDetail('Tests', 'record the suite with RUNTIME_LENS_RECORD_TESTS=true php artisan test');
+
+            return;
+        }
 
         if ($environment === 'production' || in_array($environment, $allowed, true)) {
             return;
@@ -58,6 +76,11 @@ final class InstallCommand extends Command
 
         $this->writeEnvironmentVariable($files, $this->laravel->environmentFilePath(), $value);
         $this->components->twoColumnDetail('.env', '<fg=green>'.self::ENVIRONMENTS_VARIABLE."={$value}</>");
+    }
+
+    private function confirmed(string $question): bool
+    {
+        return $this->input->isInteractive() && $this->confirm($question, false);
     }
 
     private function writeEnvironmentVariable(Filesystem $files, string $environmentFile, string $value): void
@@ -115,15 +138,15 @@ final class InstallCommand extends Command
     private function offerExtensionRecommendation(Filesystem $files): void
     {
         $file = $this->laravel->basePath('.vscode/extensions.json');
-        $recommendations = $this->readRecommendations($files, $file);
+        $settings = $this->readRecommendations($files, $file);
 
-        if ($recommendations === null) {
+        if ($settings === null) {
             $this->components->twoColumnDetail('.vscode/extensions.json', '<fg=yellow>not plain JSON</> · add "'.self::EXTENSION_ID.'" to recommendations by hand');
 
             return;
         }
 
-        if (in_array(self::EXTENSION_ID, $recommendations['recommendations'] ?? [], true)) {
+        if (in_array(self::EXTENSION_ID, $settings['recommendations'] ?? [], true)) {
             $this->components->twoColumnDetail('.vscode/extensions.json', '<fg=green>recommends Runtime Lens</>');
 
             return;
@@ -133,16 +156,11 @@ final class InstallCommand extends Command
             return;
         }
 
-        $recommendations['recommendations'] = [...($recommendations['recommendations'] ?? []), self::EXTENSION_ID];
+        $settings['recommendations'] = [...($settings['recommendations'] ?? []), self::EXTENSION_ID];
 
         $files->ensureDirectoryExists(dirname($file));
-        $files->put($file, json_encode($recommendations, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
+        $files->put($file, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
         $this->components->twoColumnDetail('.vscode/extensions.json', '<fg=green>recommends Runtime Lens</>');
-    }
-
-    private function confirmed(string $question): bool
-    {
-        return $this->input->isInteractive() && $this->confirm($question, false);
     }
 
     private function readRecommendations(Filesystem $files, string $file): ?array
@@ -151,17 +169,23 @@ final class InstallCommand extends Command
             return [];
         }
 
-        $decoded = json_decode($files->get($file), true);
+        $settings = json_decode($files->get($file), true);
 
-        return is_array($decoded) ? $decoded : null;
+        if (! is_array($settings) || array_is_list($settings) && $settings !== []) {
+            return null;
+        }
+
+        $recommendations = $settings['recommendations'] ?? [];
+
+        return is_array($recommendations) && array_is_list($recommendations) ? $settings : null;
     }
 
     private function printNextSteps(): void
     {
         $this->newLine();
         $this->line('  Next steps:');
-        $this->line('  1. Install the editor extension: search "Runtime Lens" in VS Code, Cursor or Antigravity, or run');
-        $this->line('     <fg=cyan>code --install-extension '.self::EXTENSION_ID.'</>');
+        $this->line('  1. Install the editor extension: search "Runtime Lens" in VS Code, Cursor or Antigravity, or download');
+        $this->line('     the .vsix from <fg=cyan>https://github.com/eslamabdallah74/runtime-lens/releases/latest</> (Extensions → … → Install from VSIX)');
         $this->line('  2. Use your app. Labels appear next to the code that ran within about a second.');
         $this->line('  3. Record the whole test suite: <fg=cyan>RUNTIME_LENS_RECORD_TESTS=true php artisan test</>');
         $this->line('  4. Restart running queue workers once.');

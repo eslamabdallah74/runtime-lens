@@ -71,3 +71,12 @@ describe('latestRunPerName', () => {
     expect(latestRunPerName([oldCourses, users, newCourses, job])).toEqual([users, newCourses, job]);
   });
 });
+
+describe('latestRunPerName with route groups', () => {
+  it('treats different IDs on the same route as one endpoint', () => {
+    const first = batch({ name: 'GET /courses/17', group: 'GET /courses/{course}' });
+    const second = batch({ name: 'GET /courses/18', group: 'GET /courses/{course}' });
+
+    expect(latestRunPerName([first, second])).toEqual([second]);
+  });
+});

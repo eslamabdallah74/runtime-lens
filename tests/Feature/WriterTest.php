@@ -2,10 +2,19 @@
 
 use RuntimeLens\Batch\BatchWriter;
 
-it('creates its folder with a .gitignore that ignores everything', function (): void {
+it('creates its folder with a .gitignore that ignores everything, itself included', function (): void {
     $this->get('/clean');
 
-    expect(file_get_contents($this->storageDirectory.'/runtime-lens/.gitignore'))->toBe("*\n!.gitignore\n");
+    expect(file_get_contents($this->storageDirectory.'/runtime-lens/.gitignore'))->toBe("*\n");
+});
+
+it('corrects a .gitignore written by an older version', function (): void {
+    mkdir($this->storageDirectory.'/runtime-lens', 0777, true);
+    file_put_contents($this->storageDirectory.'/runtime-lens/.gitignore', "*\n!.gitignore\n");
+
+    $this->get('/clean');
+
+    expect(file_get_contents($this->storageDirectory.'/runtime-lens/.gitignore'))->toBe("*\n");
 });
 
 it('rotates the data file when it grows past the size limit', function (): void {

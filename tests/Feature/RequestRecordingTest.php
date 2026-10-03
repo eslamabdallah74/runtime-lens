@@ -64,3 +64,17 @@ it('has no entry point when the route is handled by vendor code', function (): v
 
     expect($this->lastBatch())->entry->toBeNull()->status->toBe(302);
 });
+
+it('groups requests to the same route pattern while keeping the concrete path as the name', function (): void {
+    $this->get('/items/17');
+
+    expect($this->lastBatch())
+        ->name->toBe('GET /items/17')
+        ->group->toBe('GET /items/{item}');
+});
+
+it('uses the name as the group when no route matched', function (): void {
+    $this->get('/nowhere')->assertNotFound();
+
+    expect($this->lastBatch())->group->toBe('GET /nowhere');
+});

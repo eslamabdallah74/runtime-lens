@@ -1,4 +1,4 @@
-import { existsSync, rmSync, truncateSync, unwatchFile, watchFile } from 'node:fs';
+import { existsSync, readdirSync, rmSync, truncateSync, unwatchFile, watchFile } from 'node:fs';
 import { isAbsolute, join, relative } from 'node:path';
 import * as vscode from 'vscode';
 import { anchorFile, type AnchoredLines } from '../core/anchor';
@@ -13,6 +13,7 @@ import type { LensSettings } from './settings';
 const STORAGE_DIR = join('storage', 'runtime-lens');
 const POLL_INTERVAL_MS = 500;
 const REBUILD_DELAY_MS = 250;
+const SKIPPED_FOLDERS = new Set(['node_modules', 'vendor', 'storage']);
 
 export interface AnchoredFile extends AnchoredLines {
   relativeFile: string;
@@ -37,6 +38,7 @@ export class RuntimeLensController implements vscode.Disposable {
   private methods = new Map<string, MethodStats>();
   private indexVersion = 0;
   private unknownVersionReported = false;
+  private readError: string | null = null;
 
   constructor(
     private currentSettings: LensSettings,
@@ -108,6 +110,10 @@ export class RuntimeLensController implements vscode.Disposable {
 
   root(): string | null {
     return this.projectRoot;
+  }
+
+  readProblem(): string | null {
+    return this.readError;
   }
 
   focus(batchId: string | null): void {
@@ -193,14 +199,30 @@ export class RuntimeLensController implements vscode.Disposable {
       return join(folders[0].uri.fsPath, this.currentSettings.projectRoot);
     }
 
-    return folders.map((folder) => folder.uri.fsPath).find((folder) => existsSync(join(folder, 'artisan'))) ?? null;
+    const paths = folders.map((folder) => folder.uri.fsPath);
+    const atRoot = paths.find((folder) => existsSync(join(folder, 'artisan')));
+
+    if (atRoot !== undefined) {
+      return atRoot;
+    }
+
+    const nested = paths.flatMap((folder) => nestedLaravelApps(folder));
+
+    return nested.length === 1 ? nested[0]! : null;
   }
 
   private replaceAll(): void {
-    const parsed = this.tail!.readInitial();
+    try {
+      const parsed = this.tail!.readInitial();
 
-    this.logSkipped(parsed);
-    this.store.replace(parsed.batches);
+      this.readError = null;
+      this.logSkipped(parsed);
+      this.store.replace(parsed.batches);
+    } catch (error) {
+      this.reportReadError(error);
+      this.store.replace([]);
+    }
+
     this.rebuildIndexes();
   }
 
@@ -209,20 +231,38 @@ export class RuntimeLensController implements vscode.Disposable {
       return;
     }
 
-    const appended = this.tail.readNew();
+    try {
+      this.applyAppended(this.tail.readNew());
+    } catch (error) {
+      this.reportReadError(error);
+      this.fireUpdate();
+    }
+  }
 
+  private applyAppended(appended: ParsedLines | 'reset'): void {
     if (appended === 'reset') {
       this.replaceAll();
 
       return;
     }
 
+    this.readError = null;
     this.logSkipped(appended);
 
     if (appended.batches.length > 0) {
       this.store.append(appended.batches);
       this.rebuild.schedule();
     }
+  }
+
+  private reportReadError(error: unknown): void {
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (message !== this.readError) {
+      this.output.appendLine(`Could not read the data file: ${message}`);
+    }
+
+    this.readError = message;
   }
 
   private logSkipped(parsed: ParsedLines): void {
@@ -263,5 +303,16 @@ export class RuntimeLensController implements vscode.Disposable {
     this.lineIndex = new Map();
     this.methods = new Map();
     this.anchorCache.clear();
+  }
+}
+
+function nestedLaravelApps(folder: string): string[] {
+  try {
+    return readdirSync(folder, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.') && !SKIPPED_FOLDERS.has(entry.name))
+      .map((entry) => join(folder, entry.name))
+      .filter((directory) => existsSync(join(directory, 'artisan')));
+  } catch {
+    return [];
   }
 }

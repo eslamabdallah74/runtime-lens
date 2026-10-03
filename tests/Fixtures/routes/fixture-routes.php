@@ -26,4 +26,5 @@ Route::middleware(PassThroughMiddleware::class)->group(function (): void {
         return 'ok';
     });
     Route::redirect('/vendor-redirect', '/clean');
+    Route::get('/items/{item}', [FixtureController::class, 'clean']);
 });

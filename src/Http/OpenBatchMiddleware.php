@@ -72,6 +72,7 @@ final class OpenBatchMiddleware
         $route = $request->route();
 
         if ($route instanceof Route) {
+            $batch->group = $this->requestNamer->groupFor($request, $route);
             $batch->entry = $this->entryPointResolver->forRoute($route)?->toArray();
         }
     }

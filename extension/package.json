@@ -2,7 +2,7 @@
   "name": "runtime-lens",
   "displayName": "Runtime Lens",
   "description": "See query counts, N+1s, slow queries, slow HTTP calls, exceptions and method timings from your running Laravel app right next to the code.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "runtime-lens",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -178,6 +178,7 @@
     ]
   },
   "scripts": {
+    "vscode:prepublish": "npm run build",
     "build": "tsc --noEmit -p . && node esbuild.mjs",
     "test": "vitest run",
     "package": "vsce package --no-dependencies",

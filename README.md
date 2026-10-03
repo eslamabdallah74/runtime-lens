@@ -31,8 +31,8 @@ php artisan runtime-lens:install
 The first command can be dropped once the package is on Packagist.
 
 **2. In your editor (VS Code, Cursor, Antigravity, VSCodium):**
-1. Download [`runtime-lens-1.0.0.vsix`](https://github.com/eslamabdallah74/runtime-lens/releases/download/v1.0.0/runtime-lens-1.0.0.vsix). You can also find it on the [Releases page](https://github.com/eslamabdallah74/runtime-lens/releases/latest) or in the [`releases/`](releases) folder.
-2. Open the Extensions view → `…` menu → **Install from VSIX…** → pick the file. From a terminal: `code --install-extension runtime-lens-1.0.0.vsix`.
+1. Download the `runtime-lens-<version>.vsix` file from the [latest release](https://github.com/eslamabdallah74/runtime-lens/releases/latest). The same file is also in the [`releases/`](releases) folder.
+2. Open the Extensions view → `…` menu → **Install from VSIX…** → pick the file. From a terminal: `code --install-extension runtime-lens-<version>.vsix`.
 3. Reload the window.
 
 Once it's published to the VS Code Marketplace and Open VSX, you'll be able to search for **Runtime Lens** in the Extensions view instead.
@@ -60,7 +60,7 @@ Method summaries need a PHP extension that provides document symbols, such as In
 2. Use it from the browser, Postman or your frontend. Each request adds one line to `storage/runtime-lens/batches.jsonl`.
 3. Look at your code. Labels appear within about a second.
 
-Labels always show the **latest run** of each request, job or command. Fix an N+1, hit the endpoint again, and the warning disappears. Method timings average every recorded run. To look at one specific run, use **Recent Requests**.
+Labels always show the **latest run** of each endpoint, job or command. Fix an N+1, hit the endpoint again, and the warning disappears. Requests to the same route count as one endpoint, so `/courses/17` and `/courses/18` are the same. Method timings average every recorded run. To look at one specific run, use **Recent Requests**.
 
 **Cover the whole app in one go** by recording your feature tests:
 
@@ -122,6 +122,8 @@ The editor settings live under `runtimeLens.*`:
 - Small local databases can hide N+1s on loops of 1–2 rows; the N+1 threshold defaults to 3 for that reason.
 - Work started purely inside packages (e.g. Lighthouse `@hasMany`, Nova internals) is counted in the request but has no line in your code to show it on.
 - Only Laravel's `Http` client is recorded, not raw Guzzle or cURL.
+- Requests served by Octane / FrankenPHP **worker** processes aren't recorded yet. `runtime-lens:install` warns when Octane is installed.
+- Test requests made with `withoutMiddleware()` skip Runtime Lens's middleware, so they aren't recorded.
 
 ## Troubleshooting
 
@@ -129,7 +131,9 @@ Start with `php artisan runtime-lens:install`. It explains why recording is off,
 
 | Symptom | Check |
 |---|---|
-| Status bar says `Lens: no data` | `APP_ENV` is `local` or listed in `RUNTIME_LENS_ENVIRONMENTS`; `storage/` is writable; for tests, `RUNTIME_LENS_RECORD_TESTS=true`. |
+| Status bar says `Lens: no data` | `APP_ENV` is `local` or listed in `RUNTIME_LENS_ENVIRONMENTS`; `storage/` is writable; for tests, `RUNTIME_LENS_RECORD_TESTS=true`; the app isn't served by Octane / FrankenPHP workers. |
+| Status bar says `Lens: can't read data` | The data file isn't readable by your editor's user, for example a container writing with a strict umask. Fix its permissions. |
+| Status bar says `Lens: no Laravel app` | Open the folder that contains `artisan`, or set `runtimeLens.projectRoot`. |
 | Settings changes don't apply | You use `php artisan config:cache`; re-run it, or `config:clear`. |
 | No labels on a file | The line was edited after it was recorded, or a long-running queue worker still runs older code; hit the endpoint again or restart the worker. |
 | Jobs not recorded | Restart your queue workers once after installing. Jobs on the `sync` connection belong to the request that dispatched them. |
@@ -147,12 +151,27 @@ To run the package tests against MySQL instead, set `DB_CONNECTION=mysql` plus `
 
 ## Releasing (maintainers)
 
-1. Bump `extension/package.json` `version`, and add a `CHANGELOG.md` entry.
+**One-time setup:**
+
+1. **Packagist:** sign in at [packagist.org](https://packagist.org) with GitHub → **Submit** → `https://github.com/eslamabdallah74/runtime-lens`. Packagist then picks up new tags automatically through its GitHub hook.
+2. **VS Code Marketplace:**
+   1. Create a publisher with ID `runtime-lens` at [marketplace.visualstudio.com/manage](https://marketplace.visualstudio.com/manage).
+   2. In Azure DevOps, create a Personal Access Token with **Organization: All accessible organizations** and **Scopes: Marketplace → Manage**.
+   3. Save it as the GitHub secret `VSCE_PAT`.
+3. **Open VSX** (for Cursor, Antigravity and VSCodium):
+   1. Sign in at [open-vsx.org](https://open-vsx.org) with GitHub.
+   2. Sign the Eclipse publisher agreement (in your profile).
+   3. Create an access token.
+   4. Run `npx ovsx create-namespace runtime-lens -p <token>`.
+   5. Save the token as the GitHub secret `OVSX_PAT`.
+
+**Every release:**
+
+1. Bump `extension/package.json` `version` and add a `CHANGELOG.md` entry.
 2. Tag and push: `git tag v1.2.3 && git push --tags`. The **Release** workflow then:
    - tests and packages the extension;
-   - publishes it to the VS Code Marketplace (secret `VSCE_PAT`) and Open VSX (secret `OVSX_PAT`);
-   - attaches the `.vsix` to a GitHub release.
-3. Packagist picks up the tag through its GitHub hook.
+   - attaches the `.vsix` to the GitHub release;
+   - publishes to the Marketplace and Open VSX. A missing secret becomes a visible warning, and versions that are already published are skipped, so re-runs are safe.
 
 ## License
 

@@ -13,6 +13,8 @@ final class BatchWriter
 
     private const LOCK_FILE = '.lock';
 
+    private const GITIGNORE = "*\n";
+
     public function __construct(
         private readonly string $directory,
         private readonly int $maxFileBytes,
@@ -52,8 +54,8 @@ final class BatchWriter
 
         $gitignore = $this->pathTo('.gitignore');
 
-        if (! file_exists($gitignore)) {
-            file_put_contents($gitignore, "*\n!.gitignore\n");
+        if (! file_exists($gitignore) || file_get_contents($gitignore) !== self::GITIGNORE) {
+            file_put_contents($gitignore, self::GITIGNORE);
         }
     }
 
