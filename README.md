@@ -12,6 +12,7 @@ public function index()                         ⏱ avg 340ms per request (12) �
     DB::select('select sleep(0.3)');            🐢 slow query · 301ms
     Http::get($partnerUrl);                     🌐 slow HTTP · 1219ms
 ```
+<img width="981" height="401" alt="image" src="https://github.com/user-attachments/assets/8057eec1-7747-49c5-8357-ec95da6d2811" />
 
 No browser tab to dig through and no mapping SQL back to code by hand: use your app (or run your tests), then look at your code.
 
