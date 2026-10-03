@@ -30,7 +30,7 @@ php artisan runtime-lens:install
 The first command can be dropped once the package is on Packagist.
 
 **2. In your editor (VS Code, Cursor, Antigravity, VSCodium):**
-1. Download `runtime-lens-1.0.0.vsix` from the [latest release](https://github.com/eslamabdallah74/runtime-lens/releases/latest).
+1. Download [`runtime-lens-1.0.0.vsix`](https://github.com/eslamabdallah74/runtime-lens/releases/download/v1.0.0/runtime-lens-1.0.0.vsix). You can also find it on the [Releases page](https://github.com/eslamabdallah74/runtime-lens/releases/latest) or in the [`releases/`](releases) folder.
 2. Open the Extensions view → `…` menu → **Install from VSIX…** → pick the file. From a terminal: `code --install-extension runtime-lens-1.0.0.vsix`.
 3. Reload the window.
 
